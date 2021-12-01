@@ -1,2 +1,2 @@
 # GNN2H
-Predict 2H NMR order parameters with Graph neural networks. WIP
+Predicting smoothed 2H NMR order parameters of POPC in presence of up to two added molecules.
