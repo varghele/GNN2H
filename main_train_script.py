@@ -3,15 +3,8 @@ import numpy as np
 
 from graph_modules.graph_net_A import GNN_FULL_CLASS as GNN_A
 from graph_modules.graph_net_B import GNN_FULL_CLASS as GNN_B
-from graph_modules.graph_net_Bm import GNN_FULL_CLASS as GNN_Bm
 from graph_modules.graph_net_C import GNN_FULL_CLASS as GNN_C
 from graph_modules.graph_net_V import GNN_FULL_CLASS as GNN_V
-from graph_modules.graph_net_B_orgMP import GNN_FULL_CLASS as GNN_B_orgMP
-
-from graph_modules.graph_net_A_LN import GNN_FULL_CLASS as GNN_A_LN
-from graph_modules.graph_net_B_LN import GNN_FULL_CLASS as GNN_B_LN
-from graph_modules.graph_net_C_LN import GNN_FULL_CLASS as GNN_C_LN
-from graph_modules.graph_net_V_LN import GNN_FULL_CLASS as GNN_V_LN
 # ---------------------------------------------------------------------------------------------------------------------
 from misc_modules.plotter import plotter, plot_loss_error
 from misc_modules.load_graph_data import load_graph_data
@@ -107,8 +100,7 @@ def evaluate(batch_size, device, database, latent_graph_dict, latent_graph_list)
 # --------- Load the main INPUT training file
 # INPUT of the main training list/CONFIG DB
 # INPUT_PATH = sys.argv[1]
-#INPUT_PATH = "8_layer_norm.txt"
-INPUT_PATH = "9_get_system_LN.txt"
+INPUT_PATH = "network_commands.txt"
 
 # Create CONFIG DATABASE from input and get name
 CONFIG_DB = pd.read_csv(INPUT_PATH, sep="\t", header=1, skiprows=0)
@@ -120,13 +112,13 @@ CV_SPLITS = 4
 
 
 # --------- Load the MAIN DATABASE
-MAIN_DB = pd.read_csv("data/DB_order_parameters_POPC_NEW_onlyPOPC_MOD.csv", sep=",", header=0)
+MAIN_DB = pd.read_csv("data/DB_order_parameters_POPC.csv", sep=",", header=0)
 
 
 # --------- Create latent graph dictionary and load latent graphs
 # FILES INPUT, of where the raw mol2 files and the processed graphs are
-RAW_PATH = "1_rawKOS_mod"
-PROC_PATH = "2_latent_graphs_mod"
+RAW_PATH = "2_KOS_mol2"
+PROC_PATH = "3_latent_graphs"
 
 # Create dictionary to get the mapping of the latent graph data to molecule name
 dict_items = [[os.listdir(RAW_PATH)[i][:-5], i] for i in range(len(os.listdir(RAW_PATH)))]
@@ -151,19 +143,6 @@ for i in range(len(CONFIG_DB)):
     EPOCHS = int(CONFIG_DB["EPOCHS"].iloc[i])
     BATCH_SIZE = int(CONFIG_DB["BATCH_SIZE"].iloc[i])
     LEARNING_RATE = float(CONFIG_DB["LR"].iloc[i])
-    """ENCODING_SIZE = int(CONFIG_DB["ENCODING_SIZE"].iloc[i])
-
-    NO_GF_ONE = int(CONFIG_DB["NO_GF_ONE"].iloc[i])
-    NO_GF_TWO = int(CONFIG_DB["NO_GF_TWO"].iloc[i])
-    NO_EF_TWO = int(CONFIG_DB["NO_EF_TWO"].iloc[i])
-
-    if CONFIG_DB["NORM"].iloc[i] == "False":
-        NORM=False
-    else:
-        NORM=True
-
-
-    NO_LAYERS = int(CONFIG_DB["NO_LAYERS"].iloc[i])"""
     NO_MP_ONE = int(CONFIG_DB["NO_MP_ONE"].iloc[i])
     NO_MP_TWO = int(CONFIG_DB["NO_MP_TWO"].iloc[i])
 
@@ -221,35 +200,20 @@ for i in range(len(CONFIG_DB)):
             TEST_DF = pd.read_csv(CONFIG_NAME+"/"+cur_CNAME+"/"+str(j+1)+"/test_df.csv", sep=",", header=0)
 
             # --- Set up Graph Network
-            """model = GNN(BATCH_SIZE, NO_EF_ONE, NO_EF_TWO, NO_NF_ONE, NO_GF_ONE, NO_GF_TWO, NO_LAYERS, ENCODING_SIZE,
-                        NO_MP_ONE, NO_MP_TWO, NORM, device).to(device)"""
             if MODELNO == "A":
                 model = GNN_A(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
             if MODELNO == "B":
                 model = GNN_B(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
-            if MODELNO == "Bm":
-                model = GNN_Bm(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
             if MODELNO == "C":
                 model = GNN_C(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
             if MODELNO == "V":
                 model = GNN_V(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
-            if MODELNO == "B_orgMP":
-                model = GNN_B_orgMP(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
-
-            if MODELNO == "A_LN":
-                model = GNN_A_LN(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
-            if MODELNO == "B_LN":
-                model = GNN_B_LN(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
-            if MODELNO == "C_LN":
-                model = GNN_C_LN(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
-            if MODELNO == "V_LN":
-                model = GNN_V_LN(BATCH_SIZE, NO_MP_ONE, NO_MP_TWO).to(device)
-            #model=GNN_FULL().to(device)
             # --- Optimizer and Criterion and LR Decay
             optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
+            #You might want to decay the learning rate after some steps, then enable scheduler
             #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1000, gamma=0.1)
             criterion = torch.nn.MSELoss()
-            # --- Backward hook with gradient clipping
+            # --- Backward hook with gradient clipping (can be enabled)
             """clip_value = 0.1
             for p in model.parameters():
                 p.register_hook(lambda grad: torch.clamp(grad, -clip_value, clip_value))"""
@@ -269,7 +233,7 @@ for i in range(len(CONFIG_DB)):
                 test_err = evaluate(BATCH_SIZE, device, TEST_DF,
                                     latent_graph_dict, latent_graph_list)
 
-                #Take a scheduler step to decay the learning rate
+                #Take a scheduler step to decay the learning rate (can be enabled)
                 #scheduler.step()
 
                 # Check if something has failed, and Loss is NaN, if so, break, and restart with restarter

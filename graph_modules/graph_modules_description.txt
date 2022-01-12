@@ -3,5 +3,5 @@ MODULE B - 2/2 Encoding Layer(s), Leaky ReLU activation, 2 MetaMLP Depth, LeakyR
 MODULE C - 2/2 Encoding Layer(s), Leaky ReLU activation, 2/3 MetaMLP Depth, LeakyReLU activation, 4 Last MLP Layers
 MODULE V - 3/2 Encoding Layer(s), Leaky ReLU activation, 2 MetaMLP Depth, LeakyReLU activation, 5 Last MLP Layers
 
-All Have BatchNorm active, xavier uniform weight initialisation, same Feature Vector and Encoding Sizes
-Can think about spectral norm or other in future
+All have LayerNorm active, xavier uniform weight initialisation, same Feature Vector and Encoding Sizes.
+Can think about spectral norm or other in future.

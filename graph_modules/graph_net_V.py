@@ -1,7 +1,7 @@
 import torch
 from torch_geometric.data import Batch
 
-from torch.nn import Sequential as Seq, Linear as Lin, LeakyReLU, BatchNorm1d
+from torch.nn import Sequential as Seq, Linear as Lin, LeakyReLU, BatchNorm1d, LayerNorm
 from torch_scatter import scatter_mean, scatter_add
 from torch_geometric.nn import MetaLayer
 
@@ -36,8 +36,8 @@ class EdgeModel_ONE(torch.nn.Module):
         super(EdgeModel_ONE, self).__init__()
         hidden = HIDDEN_EDGE_ONE
         in_channels = ENCODING_EDGE_1+2*ENCODING_NODE_1
-        self.edge_mlp = Seq(Lin(in_channels, hidden), LeakyReLU(),BatchNorm1d(hidden),
-                            #Lin(hidden, hidden), LeakyReLU(),BatchNorm1d(hidden),
+        self.edge_mlp = Seq(Lin(in_channels, hidden), LeakyReLU(),LayerNorm(hidden),
+                            #Lin(hidden, hidden), LeakyReLU(),LayerNorm(hidden),
                             Lin(hidden, ENCODING_EDGE_1)).apply(init_weights)
 
     def forward(self, src, dest, edge_attr, u, batch):
@@ -53,8 +53,8 @@ class EdgeModel_TWO(torch.nn.Module):
         super(EdgeModel_TWO, self).__init__()
         hidden = HIDDEN_EDGE_TWO
         in_channels = NO_EDGE_FEATURES_TWO+2*NO_NODE_FEATURES_TWO
-        self.edge_mlp = Seq(Lin(in_channels, hidden), LeakyReLU(),BatchNorm1d(hidden),
-                            #Lin(hidden, hidden), LeakyReLU(),BatchNorm1d(hidden),
+        self.edge_mlp = Seq(Lin(in_channels, hidden), LeakyReLU(),LayerNorm(hidden),
+                            #Lin(hidden, hidden), LeakyReLU(),LayerNorm(hidden),
                             Lin(hidden, NO_EDGE_FEATURES_TWO)).apply(init_weights)
 
     def forward(self, src, dest, edge_attr, u, batch):
@@ -71,11 +71,11 @@ class NodeModel_ONE(torch.nn.Module):
         hidden=HIDDEN_NODE_ONE
         in_channels_1 = ENCODING_EDGE_1+ENCODING_NODE_1
         in_channels_2 = hidden+ENCODING_NODE_1
-        self.node_mlp_1 = Seq(Lin(in_channels_1, hidden), LeakyReLU(), BatchNorm1d(hidden),
-                              #Lin(hidden, hidden), LeakyReLU(),BatchNorm1d(hidden),
+        self.node_mlp_1 = Seq(Lin(in_channels_1, hidden), LeakyReLU(), LayerNorm(hidden),
+                              #Lin(hidden, hidden), LeakyReLU(),LayerNorm(hidden),
                               Lin(hidden, hidden)).apply(init_weights)
-        self.node_mlp_2 = Seq(Lin(in_channels_2, hidden), LeakyReLU(),BatchNorm1d(hidden),
-                              #Lin(hidden, hidden), LeakyReLU(),BatchNorm1d(hidden),
+        self.node_mlp_2 = Seq(Lin(in_channels_2, hidden), LeakyReLU(),LayerNorm(hidden),
+                              #Lin(hidden, hidden), LeakyReLU(),LayerNorm(hidden),
                               Lin(hidden, ENCODING_NODE_1)).apply(init_weights)
 
     def forward(self, x, edge_index, edge_attr, u, batch):
@@ -97,10 +97,10 @@ class NodeModel_TWO(torch.nn.Module):
         hidden=HIDDEN_NODE_TWO
         in_channels_1 = NO_EDGE_FEATURES_TWO+NO_NODE_FEATURES_TWO
         in_channels_2 = hidden+NO_NODE_FEATURES_TWO
-        self.node_mlp_1 = Seq(Lin(in_channels_1, hidden), LeakyReLU(),BatchNorm1d(hidden),
+        self.node_mlp_1 = Seq(Lin(in_channels_1, hidden), LeakyReLU(),LayerNorm(hidden),
                               #Lin(hidden, hidden), LeakyReLU(),
                               Lin(hidden, hidden)).apply(init_weights)
-        self.node_mlp_2 = Seq(Lin(in_channels_2, hidden), LeakyReLU(),BatchNorm1d(hidden),
+        self.node_mlp_2 = Seq(Lin(in_channels_2, hidden), LeakyReLU(),LayerNorm(hidden),
                               #Lin(hidden, hidden), LeakyReLU(),
                               Lin(hidden, NO_NODE_FEATURES_TWO)).apply(init_weights)
 
@@ -123,7 +123,7 @@ class GlobalModel_ONE(torch.nn.Module):
         hidden = HIDDEN_GRAPH_ONE
         in_channels=ENCODING_NODE_1+ENCODING_EDGE_1
 
-        self.global_mlp = Seq(Lin(in_channels, hidden), LeakyReLU(),BatchNorm1d(hidden),
+        self.global_mlp = Seq(Lin(in_channels, hidden), LeakyReLU(),LayerNorm(hidden),
                               #Lin(hidden, hidden), LeakyReLU(),
                               Lin(hidden, NO_GRAPH_FEATURES_ONE)).apply(init_weights)
 
@@ -145,7 +145,7 @@ class GlobalModel_TWO(torch.nn.Module):
         hidden = HIDDEN_GRAPH_TWO
         in_channels=NO_EDGE_FEATURES_TWO+NO_NODE_FEATURES_TWO
 
-        self.global_mlp = Seq(Lin(in_channels, hidden), LeakyReLU(),BatchNorm1d(hidden),
+        self.global_mlp = Seq(Lin(in_channels, hidden), LeakyReLU(),LayerNorm(hidden),
                               Lin(hidden, NO_GRAPH_FEATURES_TWO)).apply(init_weights)
 
     def forward(self, x, edge_index, edge_attr, u, batch):
@@ -167,12 +167,12 @@ class GNN_FULL_CLASS(torch.nn.Module):
         self.meta2 = MetaLayer(EdgeModel_ONE(), NodeModel_ONE(), GlobalModel_ONE())
         self.meta3 = MetaLayer(EdgeModel_TWO(), NodeModel_TWO(), GlobalModel_TWO())
 
-        self.encoding_edge_1=Seq(Lin(NO_EDGE_FEATURES_ONE,ENCODING_EDGE_1), LeakyReLU(), BatchNorm1d(ENCODING_EDGE_1),
-                               Lin(ENCODING_EDGE_1, ENCODING_EDGE_1), LeakyReLU(), BatchNorm1d(ENCODING_EDGE_1),
+        self.encoding_edge_1=Seq(Lin(NO_EDGE_FEATURES_ONE,ENCODING_EDGE_1), LeakyReLU(), LayerNorm(ENCODING_EDGE_1),
+                               Lin(ENCODING_EDGE_1, ENCODING_EDGE_1), LeakyReLU(), LayerNorm(ENCODING_EDGE_1),
                                Lin(ENCODING_EDGE_1, ENCODING_EDGE_1)).apply(init_weights)
 
-        self.encoding_node_1 = Seq(Lin(NO_NODE_FEATURES_ONE, ENCODING_NODE_1), LeakyReLU(),BatchNorm1d(ENCODING_NODE_1),
-                                 Lin(ENCODING_NODE_1, ENCODING_NODE_1), LeakyReLU(), BatchNorm1d(ENCODING_NODE_1),
+        self.encoding_node_1 = Seq(Lin(NO_NODE_FEATURES_ONE, ENCODING_NODE_1), LeakyReLU(),LayerNorm(ENCODING_NODE_1),
+                                 Lin(ENCODING_NODE_1, ENCODING_NODE_1), LeakyReLU(), LayerNorm(ENCODING_NODE_1),
                                  Lin(ENCODING_NODE_1, ENCODING_NODE_1)).apply(init_weights)
 
 
@@ -181,20 +181,20 @@ class GNN_FULL_CLASS(torch.nn.Module):
                                  Lin(ENCODING_EDGE_2, NO_EDGE_FEATURES_TWO)).apply(init_weights)
 
         self.encoding_node_2 = Seq(Lin(NO_GRAPH_FEATURES_ONE, NO_GRAPH_FEATURES_ONE), LeakyReLU(),
-                                   BatchNorm1d(NO_GRAPH_FEATURES_ONE),
+                                   LayerNorm(NO_GRAPH_FEATURES_ONE),
                                    #Lin(NO_GRAPH_FEATURES_ONE, NO_GRAPH_FEATURES_ONE), LeakyReLU(),
-                                   #BatchNorm1d(NO_GRAPH_FEATURES_ONE),
+                                   #LayerNorm(NO_GRAPH_FEATURES_ONE),
                                    Lin(NO_GRAPH_FEATURES_ONE, NO_GRAPH_FEATURES_ONE)).apply(init_weights)
 
 
         self.mlp_last = Seq(Lin(NO_GRAPH_FEATURES_TWO, NO_GRAPH_FEATURES_TWO), LeakyReLU(),
-                            BatchNorm1d(NO_GRAPH_FEATURES_TWO),
+                            LayerNorm(NO_GRAPH_FEATURES_TWO),
                             Lin(NO_GRAPH_FEATURES_TWO,NO_GRAPH_FEATURES_TWO), LeakyReLU(),
-                            BatchNorm1d(NO_GRAPH_FEATURES_TWO),
+                            LayerNorm(NO_GRAPH_FEATURES_TWO),
                             Lin(NO_GRAPH_FEATURES_TWO, NO_GRAPH_FEATURES_TWO), LeakyReLU(),
-                            BatchNorm1d(NO_GRAPH_FEATURES_TWO),
+                            LayerNorm(NO_GRAPH_FEATURES_TWO),
                             Lin(NO_GRAPH_FEATURES_TWO, NO_GRAPH_FEATURES_TWO), LeakyReLU(),
-                            BatchNorm1d(NO_GRAPH_FEATURES_TWO),
+                            LayerNorm(NO_GRAPH_FEATURES_TWO),
                             Lin(NO_GRAPH_FEATURES_TWO, 15)).apply(init_weights)
 
         self.batch_size = BATCH_SIZE

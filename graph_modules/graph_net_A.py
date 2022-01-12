@@ -1,7 +1,7 @@
 import torch
 from torch_geometric.data import Batch
 
-from torch.nn import Sequential as Seq, Linear as Lin, LeakyReLU, BatchNorm1d
+from torch.nn import Sequential as Seq, Linear as Lin, LeakyReLU, BatchNorm1d, LayerNorm
 from torch_scatter import scatter_mean, scatter_add
 from torch_geometric.nn import MetaLayer
 
@@ -163,7 +163,7 @@ class GNN_FULL_CLASS(torch.nn.Module):
 
 
         self.mlp_last = Seq(Lin(NO_GRAPH_FEATURES_TWO, NO_GRAPH_FEATURES_TWO), LeakyReLU(),
-                            BatchNorm1d(NO_GRAPH_FEATURES_TWO),
+                            LayerNorm(NO_GRAPH_FEATURES_TWO),
                             Lin(NO_GRAPH_FEATURES_TWO, 15)).apply(init_weights)
 
         self.batch_size = BATCH_SIZE
