@@ -104,7 +104,7 @@ where:
 **molp2** - molecular ratio of second molecule (between 0 and 1)  
 **molpm** - molecular ratio of membrane (between 0 and 1)  
 **Temperature** - Temperature this measurement was recorded at in Kelvin  
-**WTp** - water content of the sample in weight% (1-99), or NULL if unknown
+**WTp** - water content of the sample in weight% (1-99), or NULL if unknown  
 **2...16** - order parameter value at methyl group carbon no. **n**
 
 The information that belongs in the columns is the same as in the names of the files in `2H_data`. Additionally, the value of the order parameters from position 2 to 16 are in the columns 2 to 16.
